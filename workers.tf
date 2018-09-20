@@ -91,28 +91,38 @@ resource "aws_security_group_rule" "workers_ingress_cluster" {
 }
 
 resource "aws_iam_role" "workers" {
-  name_prefix        = "${aws_eks_cluster.this.name}"
+  count = "${var.worker_group_count}"
+
+  name_prefix        = "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
   assume_role_policy = "${data.aws_iam_policy_document.workers_assume_role_policy.json}"
 }
 
 resource "aws_iam_instance_profile" "workers" {
-  name_prefix = "${aws_eks_cluster.this.name}"
-  role        = "${aws_iam_role.workers.name}"
+  count = "${var.worker_group_count}"
+
+  name_prefix = "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
+  role        = "${element(aws_iam_role.workers.*.name, count.index)}"
 }
 
 resource "aws_iam_role_policy_attachment" "workers_AmazonEKSWorkerNodePolicy" {
+  count = "${var.worker_group_count}"
+
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = "${aws_iam_role.workers.name}"
+  role       = "${element(aws_iam_role.workers.*.name, count.index)}"
 }
 
 resource "aws_iam_role_policy_attachment" "workers_AmazonEKS_CNI_Policy" {
+  count = "${var.worker_group_count}"
+
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = "${aws_iam_role.workers.name}"
+  role       = "${element(aws_iam_role.workers.*.name, count.index)}"
 }
 
 resource "aws_iam_role_policy_attachment" "workers_AmazonEC2ContainerRegistryReadOnly" {
+  count = "${var.worker_group_count}"
+
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = "${aws_iam_role.workers.name}"
+  role       = "${element(aws_iam_role.workers.*.name, count.index)}"
 }
 
 resource "null_resource" "tags_as_list_of_maps" {
@@ -126,8 +136,10 @@ resource "null_resource" "tags_as_list_of_maps" {
 }
 
 resource "aws_iam_role_policy_attachment" "workers_autoscaling" {
+  count = "${var.worker_group_count}"
+
   policy_arn = "${aws_iam_policy.worker_autoscaling.arn}"
-  role       = "${aws_iam_role.workers.name}"
+  role       = "${element(aws_iam_role.workers.*.name, count.index)}"
 }
 
 resource "aws_iam_policy" "worker_autoscaling" {

@@ -54,12 +54,12 @@ output "worker_security_group_id" {
   value       = "${local.worker_security_group_id}"
 }
 
-output "worker_iam_role_name" {
+output "worker_iam_role_names" {
   description = "IAM role name attached to EKS workers"
-  value       = "${aws_iam_role.workers.name}"
+  value       = "${aws_iam_role.workers.*.name}"
 }
 
-output "worker_iam_role_arn" {
+output "worker_iam_role_arns" {
   description = "IAM role ID attached to EKS workers"
-  value       = "${aws_iam_role.workers.arn}"
+  value       = "${aws_iam_role.workers.*.arn}"
 }
